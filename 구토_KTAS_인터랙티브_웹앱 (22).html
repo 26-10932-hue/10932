@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>구토, 생존 신호인가 응급 신호인가 — 융합탐구 인터랙티브 리포트</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700;900&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #eef2f0;
+    --bg-deep: #e4eae7;
+    --surface: #ffffff;
+    --ink: #142228;
+    --ink-soft: #46595f;
+    --line: #cdd8d4;
+    --teal: #1f6f78;
+    --teal-deep: #123f45;
+    --k1: #d7263d;
+    --k2: #f2622e;
+    --k3: #f2b705;
+    --k4: #3f9d64;
+    --k5: #3766c9;
+    --radius: 4px;
+    --serif: 'Noto Serif KR', serif;
+    --sans: 'IBM Plex Sans KR', sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+
+  a{color:var(--teal-deep);}
+  ::selection{background:var(--teal); color:#fff;}
+  :focus-visible{outline:3px solid var(--teal); outline-offset:2px;}
+
+  .wrap{max-width:920px; margin:0 auto; padding:0 24px;}
+
+  /* ---------- topbar ---------- */
+  .topbar{
+    position:sticky; top:0; z-index:50;
+    background:rgba(238,242,240,0.9);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line);
+  }
+  .topbar-inner{
+    max-width:920px; margin:0 auto; padding:12px 24px;
+    display:flex; align-items:center; justify-content:space-between;
+    font-family:var(--mono); font-size:12px; letter-spacing:.04em;
+    color:var(--ink-soft);
+  }
+  .topbar-inner .tag{color:var(--teal-deep); font-weight:600;}
+  .topbar nav{display:flex; gap:16px; flex-wrap:wrap;}
+  .topbar nav a{text-decoration:none; color:var(--ink-soft);}
+  .topbar nav a:hover{color:var(--teal-deep);}
+
+  /* ---------- hero ---------- */
+  .hero{padding:72px 0 56px; border-bottom:1px solid var(--line);}
+  .eyebrow{
+    font-family:var(--mono); font-size:12px; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--teal-deep);
+    display:flex; gap:10px; align-items:center; margin-bottom:22px;
+  }
+  .eyebrow::before{content:""; width:26px; height:1px; background:var(--teal-deep);}
+  h1.headline{
+    font-family:var(--serif); font-weight:900;
+    font-size:clamp(32px, 5.4vw, 56px);
+    line-height:1.18; margin:0 0 22px; letter-spacing:-0.01em;
+  }
+  h1.headline .q{color:var(--teal-deep);}
+  .hero-sub{font-size:17px; color:var(--ink-soft); max-width:60ch; margin:0 0 30px;}
+  .meta-row{display:flex; flex-wrap:wrap; gap:10px; font-family:var(--mono); font-size:12px;}
+  .meta-chip{border:1px solid var(--line); background:var(--surface); padding:6px 12px; border-radius:999px; color:var(--ink-soft);}
+
+  .hero-viz{margin-top:44px; border:1px solid var(--line); background:var(--surface); border-radius:var(--radius); padding:20px 22px;}
+  .hero-viz-label{font-family:var(--mono); font-size:11px; color:var(--ink-soft); margin-bottom:10px; letter-spacing:.04em;}
+  .pulse-line{width:100%; height:56px; display:block;}
+  .pulse-path{fill:none; stroke:var(--teal); stroke-width:2; stroke-dasharray:600; stroke-dashoffset:600; animation:draw 2.6s ease-out forwards;}
+  @keyframes draw{to{stroke-dashoffset:0;}}
+
+  /* ---------- section shell ---------- */
+  section{padding:60px 0; border-bottom:1px solid var(--line);}
+  .sec-head{margin-bottom:32px;}
+  .sec-num{font-family:var(--mono); font-size:12px; color:var(--teal-deep); letter-spacing:.08em; margin-bottom:10px; display:block;}
+  h2.sec-title{font-family:var(--serif); font-weight:700; font-size:clamp(24px,3.2vw,32px); margin:0 0 12px;}
+  .sec-desc{color:var(--ink-soft); max-width:64ch; font-size:15.5px;}
+
+  /* ---------- 개요 요약 ---------- */
+  .summary-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:14px;}
+  @media (max-width:700px){ .summary-grid{grid-template-columns:1fr;} }
+  .summary-card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:18px 20px;}
+  .summary-card .s-label{font-family:var(--mono); font-size:11px; color:var(--teal-deep); letter-spacing:.06em; margin-bottom:8px;}
+  .summary-card p{margin:0; font-size:14px; color:var(--ink-soft);}
+  .summary-card.wide{grid-column:1 / -1;}
+  .summary-card p strong{color:var(--ink);}
+
+  /* ---------- reflex diagram ---------- */
+  .reflex-stage{display:grid; grid-template-columns: 1.1fr 0.9fr; gap:28px; align-items:start;}
+  @media (max-width:760px){ .reflex-stage{grid-template-columns:1fr;} }
+  .reflex-svg-box{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:12px;}
+  .node{cursor:pointer;}
+  .node circle{fill:var(--surface); stroke:var(--teal); stroke-width:1.6; transition:fill .18s, stroke .18s;}
+  .node text{font-family:var(--sans); font-size:12.5px; fill:var(--ink); font-weight:600; pointer-events:none;}
+  .node.active circle{fill:var(--teal); stroke:var(--teal-deep);}
+  .node.active text{fill:#fff;}
+  .node:hover circle{stroke:var(--teal-deep);}
+  .center-node circle{fill:var(--teal-deep); stroke:var(--teal-deep);}
+  .center-node text{fill:#fff; font-weight:700;}
+  .link{stroke:var(--line); stroke-width:1.6;}
+
+  .reflex-info{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:22px; min-height:220px;}
+  .reflex-info h3{font-family:var(--serif); font-size:19px; margin:0 0 10px; color:var(--teal-deep);}
+  .reflex-info p{font-size:14.5px; color:var(--ink-soft); margin:0;}
+  .reflex-hint{font-family:var(--mono); font-size:12px; color:var(--ink-soft);}
+
+  /* ---------- cause cards ---------- */
+  .cause-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:14px;}
+  @media (max-width:760px){ .cause-grid{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:480px){ .cause-grid{grid-template-columns:1fr;} }
+  .cause-card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:16px; cursor:pointer; transition:border-color .15s, transform .15s; text-align:left; font-family:inherit;}
+  .cause-card:hover{border-color:var(--teal); transform:translateY(-2px);}
+  .cause-card .idx{font-family:var(--mono); font-size:11px; color:var(--ink-soft);}
+  .cause-card h4{margin:8px 0 6px; font-size:15.5px; font-family:var(--sans); font-weight:700;}
+  .cause-card p{margin:0; font-size:13px; color:var(--ink-soft); max-height:0; overflow:hidden; transition:max-height .25s ease;}
+  .cause-card.open p{max-height:200px; margin-top:6px;}
+  .cause-card .chev{float:right; color:var(--teal-deep); font-family:var(--mono);}
+
+  /* ---------- KTAS simulator ---------- */
+  .sim-panel{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:28px;}
+  .sim-grid{display:grid; grid-template-columns:1fr 1fr; gap:28px;}
+  @media (max-width:760px){ .sim-grid{grid-template-columns:1fr;} }
+
+  .check-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px;}
+  .check-item{display:flex; align-items:flex-start; gap:10px; padding:9px 8px; border-radius:var(--radius); cursor:pointer;}
+  .check-item:hover{background:var(--bg-deep);}
+  .check-item input{margin-top:3px; width:16px; height:16px; accent-color:var(--teal-deep); flex:none;}
+  .check-item span{font-size:13.5px;}
+  .check-item .lvl-tag{font-family:var(--mono); font-size:10px; color:var(--ink-soft); margin-left:auto; padding-top:2px; flex:none;}
+
+  .sim-actions{display:flex; gap:10px; margin-top:16px; flex-wrap:wrap;}
+  .btn{font-family:var(--sans); font-weight:600; font-size:13.5px; border:1px solid var(--teal-deep); background:var(--teal-deep); color:#fff; padding:11px 18px; border-radius:999px; cursor:pointer; transition:opacity .15s;}
+  .btn:hover{opacity:.86;}
+  .btn.ghost{background:transparent; color:var(--teal-deep);}
+
+  .scenario-title{font-family:var(--mono); font-size:11px; color:var(--ink-soft); letter-spacing:.06em; margin:22px 0 10px;}
+  .scenario-row{display:flex; flex-wrap:wrap; gap:8px;}
+  .chip{
+    font-family:var(--sans); font-size:12.5px; font-weight:600;
+    border:1px solid var(--line); background:var(--bg-deep); color:var(--ink);
+    padding:8px 13px; border-radius:999px; cursor:pointer; transition:border-color .15s, background .15s;
+  }
+  .chip:hover{border-color:var(--teal); background:#fff;}
+  .chip.active{background:var(--teal-deep); border-color:var(--teal-deep); color:#fff;}
+
+  .gauge-wrap{display:flex; flex-direction:column; align-items:center; gap:16px;}
+  .gauge{width:100%; max-width:320px;}
+  .gauge-seg{transition:opacity .2s;}
+  .gauge-seg.dim{opacity:.28;}
+  .gauge-needle{transform-origin: 160px 150px; transition:transform .6s cubic-bezier(.2,.9,.25,1);}
+
+  .result-card{width:100%; border-radius:var(--radius); padding:18px 20px; border:1px solid var(--line); background:var(--bg-deep);}
+  .result-card .lvl{font-family:var(--mono); font-size:12px; letter-spacing:.06em; margin-bottom:6px; color:var(--ink-soft);}
+  .result-card h3{margin:0 0 8px; font-family:var(--serif); font-size:22px;}
+  .result-card p{margin:0; font-size:14px; color:var(--ink-soft);}
+  .result-why{margin-top:12px; font-size:13px; color:var(--ink); border-top:1px dashed var(--line); padding-top:12px;}
+  .result-why b{color:var(--teal-deep); display:block; margin-bottom:4px; font-size:11.5px; font-family:var(--mono); letter-spacing:.04em;}
+  .result-note{margin-top:10px; font-size:12.5px; color:var(--ink-soft);}
+
+  /* ---------- conclusion ---------- */
+  .conclusion-block{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:26px; font-size:15px; color:var(--ink-soft);}
+  .conclusion-block strong{color:var(--ink);}
+  .next-steps{margin-top:18px; padding-top:18px; border-top:1px dashed var(--line);}
+  .next-steps h4{margin:0 0 8px; font-family:var(--sans); font-size:14px; color:var(--teal-deep);}
+
+  footer{padding:34px 0 60px; font-family:var(--mono); font-size:12px; color:var(--ink-soft);}
+  footer .src{margin-bottom:6px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <span class="tag">KTAS · 구토 감별 인터랙티브</span>
+    <nav>
+      <a href="#overview">개요</a>
+      <a href="#reflex">반사경로</a>
+      <a href="#causes">원인분류</a>
+      <a href="#simulator">시뮬레이터</a>
+      <a href="#conclusion">결론</a>
+    </nav>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">의치학 계열 융합탐구 · 최현서</div>
+    <h1 class="headline">구토는 <span class="q">생존 신호</span>일까,<br><span class="q">응급 신호</span>일까?</h1>
+    <p class="hero-sub">
+      같은 증상이라도 원인과 환자 상태에 따라 전혀 다른 의미를 가질 수 있습니다.
+      이 페이지는 구토가 발생하는 생리학적 경로를 따라가고, 실제 응급실에서 쓰이는
+      KTAS(한국형 중증도 분류) 기준으로 다양한 사례를 직접 평가해보는 인터랙티브 자료입니다.
+    </p>
+    <div class="meta-row">
+      <span class="meta-chip">희망 전공 · 의예과 / 의학과</span>
+      <span class="meta-chip">참고자료 · PubMed 논문</span>
+      <span class="meta-chip">참고자료 · YTN 메디컬 인사이트 97회</span>
+    </div>
+
+    <div class="hero-viz">
+      <div class="hero-viz-label">EMERGENCY MONITOR — VOMITING REFLEX ARC</div>
+      <svg class="pulse-line" viewBox="0 0 800 60" preserveAspectRatio="none">
+        <path class="pulse-path" d="M0,30 L120,30 L140,10 L160,50 L180,30 L260,30 L280,14 L300,46 L320,30 L420,30 L440,8 L460,52 L480,30 L620,30 L640,16 L660,44 L680,30 L800,30" />
+      </svg>
+    </div>
+  </div>
+</header>
+
+<section id="overview">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-num">00 — 탐구 한눈에 보기</span>
+      <h2 class="sec-title">탐구보고서 요약</h2>
+    </div>
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="s-label">01 · 탐구 동기</div>
+        <p>빈속에 약을 먹은 뒤 겪은 구토를 계기로, <strong>같은 증상도 원인에 따라 전혀 다른 의미</strong>를 가질 수 있다는 점에 흥미를 느껴 탐구를 시작했다.</p>
+      </div>
+      <div class="summary-card">
+        <div class="s-label">02 · 탐구 과정</div>
+        <p>PubMed 논문과 YTN 메디컬 인사이트 영상을 분석해, 구토가 여러 자극이 종합되어 나타나는 <strong>반사작용</strong>이며 응급실은 <strong>KTAS</strong> 기준으로 중증도를 분류한다는 사실을 확인했다.</p>
+      </div>
+      <div class="summary-card">
+        <div class="s-label">03 · 결론</div>
+        <p>구토는 몸을 지키는 방어 반응이면서 다양한 질환의 공통 증상이기도 하다. <strong>증상 하나만으로는 응급 여부를 판단할 수 없다.</strong></p>
+      </div>
+      <div class="summary-card">
+        <div class="s-label">04 · 성장 및 진로</div>
+        <p>논문을 직접 찾아 근거 기반으로 사고하는 법을 배웠고, 제한된 시간에 최선의 판단을 내리는 <strong>응급의학과 의사</strong>라는 진로를 더 구체적으로 그리게 되었다.</p>
+      </div>
+      <div class="summary-card wide">
+        <div class="s-label">05 · 후속 심화 계획</div>
+        <p>항구토제가 원인별로 어떤 원리로 작용하는지, 그리고 이것이 응급실의 진단·치료 과정과 어떻게 연결되는지를 다음 탐구로 확장할 계획이다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="reflex">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-num">01 — 왜 구토가 일어나는가</span>
+      <h2 class="sec-title">구토중추로 모이는 네 갈래의 신호</h2>
+      <p class="sec-desc">
+        구토는 위장이 단독으로 일으키는 반응이 아닙니다. 연수(숨뇌)에 위치한 구토중추는
+        서로 다른 네 경로에서 오는 자극을 종합적으로 받아들여 구토 여부를 결정합니다.
+        아래 다이어그램의 노드를 눌러 각 경로를 확인해보세요.
+      </p>
+    </div>
+
+    <div class="reflex-stage">
+      <div class="reflex-svg-box">
+        <svg id="reflexSvg" viewBox="0 0 420 380" width="100%">
+          <line class="link" x1="210" y1="190" x2="90" y2="70"></line>
+          <line class="link" x1="210" y1="190" x2="330" y2="70"></line>
+          <line class="link" x1="210" y1="190" x2="90" y2="310"></line>
+          <line class="link" x1="210" y1="190" x2="330" y2="310"></line>
+
+          <g class="node" data-key="gi">
+            <circle cx="90" cy="70" r="46"></circle>
+            <text x="90" y="65" text-anchor="middle">위장관</text>
+            <text x="90" y="82" text-anchor="middle" font-size="10">자극</text>
+          </g>
+          <g class="node" data-key="vest">
+            <circle cx="330" cy="70" r="46"></circle>
+            <text x="330" y="65" text-anchor="middle">평형기관</text>
+            <text x="330" y="82" text-anchor="middle" font-size="10">(전정기관)</text>
+          </g>
+          <g class="node" data-key="blood">
+            <circle cx="90" cy="310" r="46"></circle>
+            <text x="90" y="305" text-anchor="middle">혈액 속</text>
+            <text x="90" y="322" text-anchor="middle" font-size="10">화학물질·독소</text>
+          </g>
+          <g class="node" data-key="brain">
+            <circle cx="330" cy="310" r="46"></circle>
+            <text x="330" y="305" text-anchor="middle">대뇌</text>
+            <text x="330" y="322" text-anchor="middle" font-size="10">(심리·시각 자극)</text>
+          </g>
+
+          <g class="node center-node" data-key="center">
+            <circle cx="210" cy="190" r="52"></circle>
+            <text x="210" y="184" text-anchor="middle">구토중추</text>
+            <text x="210" y="200" text-anchor="middle" font-size="10">(연수)</text>
+          </g>
+        </svg>
+      </div>
+
+      <div class="reflex-info" id="reflexInfo">
+        <p class="reflex-hint">← 노드를 클릭하면 설명이 표시됩니다</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="causes">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-num">02 — 같은 증상, 다른 원인</span>
+      <h2 class="sec-title">구토를 일으키는 대표 질환군</h2>
+      <p class="sec-desc">
+        구토는 감염성 위장염 하나로 설명되지 않습니다. 아래 카드를 눌러 각 원인이
+        구토를 유발하는 방식과 함께 동반되기 쉬운 특징을 확인해보세요.
+      </p>
+    </div>
+    <div class="cause-grid" id="causeGrid"></div>
+  </div>
+</section>
+
+<section id="simulator">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-num">03 — 같은 증상, 다른 위험도</span>
+      <h2 class="sec-title">KTAS 자가 분류 시뮬레이터</h2>
+      <p class="sec-desc">
+        응급실은 접수 순서가 아니라 <strong>위험도</strong> 순서로 진료합니다. 아래 다섯 가지
+        상황 중 하나를 선택하거나, 직접 동반 증상을 체크해서 예상 KTAS 단계를 확인해보세요.
+        평가 후에는 왜 그 단계로 분류됐는지도 함께 설명해드립니다.
+      </p>
+    </div>
+
+    <div class="sim-panel">
+      <div class="scenario-title">상황으로 바로 평가하기</div>
+      <div class="scenario-row" id="scenarioRow"></div>
+
+      <div class="sim-grid" style="margin-top:26px;">
+        <div>
+          <div class="scenario-title" style="margin-top:0;">또는 동반 증상을 직접 체크하기</div>
+          <ul class="check-list" id="symptomList"></ul>
+          <div class="sim-actions">
+            <button class="btn" id="evalBtn">평가하기</button>
+            <button class="btn ghost" id="resetBtn">초기화</button>
+          </div>
+        </div>
+
+        <div class="gauge-wrap">
+          <svg class="gauge" viewBox="0 0 320 190" id="gaugeSvg">
+            <path class="gauge-seg" data-lv="1" d="M20,150 A140,140 0 0,1 63,42 L96,80 A96,96 0 0,0 64,150 Z" fill="#d7263d"></path>
+            <path class="gauge-seg" data-lv="2" d="M63,42 A140,140 0 0,1 133,15 L138,63 A96,96 0 0,0 96,80 Z" fill="#f2622e"></path>
+            <path class="gauge-seg" data-lv="3" d="M133,15 A140,140 0 0,1 187,15 L182,63 A96,96 0 0,0 138,63 Z" fill="#f2b705"></path>
+            <path class="gauge-seg" data-lv="4" d="M187,15 A140,140 0 0,1 257,42 L224,80 A96,96 0 0,0 182,63 Z" fill="#3f9d64"></path>
+            <path class="gauge-seg" data-lv="5" d="M257,42 A140,140 0 0,1 300,150 L256,150 A96,96 0 0,0 224,80 Z" fill="#3766c9"></path>
+            <g class="gauge-needle" id="needle">
+              <line x1="160" y1="150" x2="160" y2="45" stroke="#142228" stroke-width="4" stroke-linecap="round"></line>
+              <circle cx="160" cy="150" r="9" fill="#142228"></circle>
+            </g>
+          </svg>
+
+          <div class="result-card" id="resultCard">
+            <div class="lvl">RESULT</div>
+            <h3 id="resultTitle">상황을 선택하거나 증상을 체크해보세요</h3>
+            <p id="resultDesc">아무 증상도 선택하지 않으면 안정적인 상태로 간주해 KTAS 5단계로 표시됩니다.</p>
+            <div class="result-why" id="resultWhy" style="display:none;"><b>WHY</b><span id="whyText"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="conclusion" style="border-bottom:none;">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-num">04 — 결론</span>
+      <h2 class="sec-title">증상이 아니라 &#39;맥락&#39;이 응급을 결정한다</h2>
+    </div>
+    <div class="conclusion-block">
+      <p>
+        구토는 몸속 위험 요소를 제거하기 위한 <strong>생리적 방어 반응</strong>이면서도,
+        감염성 위장염부터 뇌질환까지 매우 다양한 질환에서 공통적으로 나타나는 증상이다.
+        따라서 구토라는 증상 하나만으로 응급 여부를 판단할 수 없으며, 응급실에서는
+        의식 상태·활력징후·동반 증상을 종합적으로 평가하는 <strong>KTAS</strong> 기준을 통해
+        중증도를 분류하고 그에 맞는 검사와 치료를 시행한다.
+      </p>
+      <p style="margin-top:12px;">
+        결국 구토는 생존 신호와 응급 신호로 단순히 나뉘는 증상이 아니라,
+        원인과 환자의 전반적 상태를 함께 고려해야 비로소 의미를 정확히 판단할 수 있는 증상이다.
+      </p>
+      <div class="next-steps">
+        <h4>후속 심화 활동 계획</h4>
+        <p style="margin:0;">
+          항구토제가 원인별로 어떤 기전으로 작용하는지, 그리고 이것이 응급의학 진단 과정과
+          어떻게 연결되는지를 다음 탐구 주제로 확장할 예정이다.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="src">참고자료 1 · PubMed — Nausea, Vomiting, and Nonbloody Diarrhea in the Emergency Department</div>
+    <div class="src">참고자료 2 · YTN 메디컬 인사이트 97회, 응급의학과 전문의가 알려주는 응급실 이용 설명서</div>
+    <div class="src">이 웹앱은 탐구보고서의 부속 자료이며, KTAS 시뮬레이터는 교육 목적의 단순화된 모델로 실제 의료적 진단을 대체하지 않습니다.</div>
+  </div>
+</footer>
+
+<script>
+// ---------- 반사 경로 데이터 ----------
+const reflexData = {
+  gi: { title: "위장관 자극", text: "빈속에 약물이나 자극적 물질이 위 점막을 직접 자극하면, 미주신경을 통해 구토중추로 신호가 전달됩니다." },
+  vest: { title: "평형기관(전정기관) 자극", text: "멀미나 어지럼증처럼 몸의 균형 감각에 이상이 생기면 전정기관이 이를 감지해 구토중추를 자극합니다." },
+  blood: { title: "혈액 속 화학물질·독소", text: "약물, 알코올, 독성 물질 등이 혈액을 통해 순환하면 연수의 화학수용체 유발대(CTZ)가 이를 감지하고 구토중추에 신호를 보냅니다." },
+  brain: { title: "대뇌 — 심리·시각적 자극", text: "불쾌한 냄새나 장면, 극심한 스트레스처럼 심리적·시각적 요인도 대뇌를 거쳐 구토중추를 자극할 수 있습니다." },
+  center: { title: "구토중추 (연수)", text: "위 네 경로에서 오는 자극을 종합적으로 받아들여 구토 여부를 최종적으로 결정하는 통합 중추입니다. 구토는 위장만의 문제가 아니라 온몸의 신호가 모이는 반사작용입니다." }
+};
+
+const infoBox = document.getElementById('reflexInfo');
+document.querySelectorAll('#reflexSvg .node').forEach(node => {
+  node.addEventListener('click', () => {
+    document.querySelectorAll('#reflexSvg .node').forEach(n => n.classList.remove('active'));
+    node.classList.add('active');
+    const d = reflexData[node.getAttribute('data-key')];
+    infoBox.innerHTML = `<h3>${d.title}</h3><p>${d.text}</p>`;
+  });
+});
+
+// ---------- 원인별 카드 ----------
+const causes = [
+  {n:"01", name:"감염성 위장염 / 식중독", desc:"바이러스나 세균, 독소가 위장관을 직접 자극하여 구토와 설사를 일으키는 가장 흔한 원인입니다."},
+  {n:"02", name:"약물 부작용", desc:"빈속에 복용한 약물이 위 점막을 자극하거나, 특정 약물이 뇌의 화학수용체를 직접 자극해 구토를 유발합니다."},
+  {n:"03", name:"편두통", desc:"두통 발작 시 뇌간의 흥분이 함께 구토중추를 자극하여 심한 두통과 구토가 동반되는 경우가 많습니다."},
+  {n:"04", name:"장폐색", desc:"장이 막혀 내용물이 정체되면 복부 팽만과 극심한 통증, 담즙성 구토가 나타날 수 있는 외과적 응급 질환입니다."},
+  {n:"05", name:"췌장염", desc:"췌장에 염증이 생기면 상복부의 극심한 통증과 함께 구토가 동반되며, 빠른 진단과 치료가 필요합니다."},
+  {n:"06", name:"당뇨병성 케톤산증", desc:"인슐린 부족으로 혈액이 산성화되는 대사 응급 상태로, 구토·복통과 함께 의식 저하로 이어질 수 있습니다."},
+  {n:"07", name:"뇌질환 (중추성 구토)", desc:"뇌압 상승이나 뇌출혈 등이 구토중추를 직접 자극하는 경우로, 두통·의식 저하·신경학적 이상이 함께 나타나면 즉각적인 평가가 필요합니다."},
+];
+
+const grid = document.getElementById('causeGrid');
+causes.forEach(c => {
+  const card = document.createElement('button');
+  card.className = 'cause-card';
+  card.innerHTML = `<span class="idx">${c.n}</span><span class="chev">+</span><h4>${c.name}</h4><p>${c.desc}</p>`;
+  card.addEventListener('click', () => {
+    const isOpen = card.classList.contains('open');
+    document.querySelectorAll('.cause-card').forEach(cc => { cc.classList.remove('open'); cc.querySelector('.chev').textContent = '+'; });
+    if(!isOpen){ card.classList.add('open'); card.querySelector('.chev').textContent = '–'; }
+  });
+  grid.appendChild(card);
+});
+
+// ---------- KTAS 시뮬레이터 : 증상 체크리스트 ----------
+const symptoms = [
+  {id:'consciousness', label:'의식 저하 또는 반응 없음', lvl:1},
+  {id:'shock', label:'지속적인 혈압 저하 · 쇼크 징후', lvl:2},
+  {id:'resp', label:'호흡곤란', lvl:2},
+  {id:'hematemesis', label:'토혈(피가 섞인 구토)', lvl:2},
+  {id:'neuro', label:'신경학적 이상 (마비, 편측 위약 등)', lvl:2},
+  {id:'abdpain', label:'참기 힘든 극심한 복통', lvl:3},
+  {id:'headache', label:'심한 두통 동반', lvl:3},
+  {id:'dehydration', label:'지속적 구토로 인한 탈수 징후', lvl:4},
+  {id:'fever', label:'발열 동반', lvl:4},
+  {id:'mild', label:'경미한 어지럼증만 동반, 전반적으로 안정적', lvl:5},
+];
+
+const listEl = document.getElementById('symptomList');
+symptoms.forEach(s => {
+  const li = document.createElement('li');
+  li.className = 'check-item';
+  li.innerHTML = `<input type="checkbox" id="${s.id}" data-lvl="${s.lvl}"><span>${s.label}</span><span class="lvl-tag">KTAS ${s.lvl}</span>`;
+  li.addEventListener('click', (e) => {
+    if(e.target.tagName !== 'INPUT'){ const box = li.querySelector('input'); box.checked = !box.checked; }
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  });
+  listEl.appendChild(li);
+});
+
+const ktasInfo = {
+  1: {name:'소생', color:'#d7263d', desc:'생명이 즉각적으로 위협받는 상태입니다. 예: 심정지. 최우선으로 즉시 처치가 필요합니다.'},
+  2: {name:'긴급', color:'#f2622e', desc:'몇 분 내 처치가 필요한 잠재적으로 위험한 상태입니다. 쇼크, 호흡곤란, 토혈 등이 해당합니다.'},
+  3: {name:'응급', color:'#f2b705', desc:'악화될 가능성이 있어 비교적 신속한 평가가 필요한 상태입니다.'},
+  4: {name:'준응급', color:'#3f9d64', desc:'현재 상태는 안정적이나 지속적인 관찰과 처치가 필요할 수 있는 상태입니다.'},
+  5: {name:'비응급', color:'#3766c9', desc:'상태가 안정적이며 예: 단순 감기 수준으로, 예약 진료로도 대응 가능한 수준입니다.'},
+};
+
+const needle = document.getElementById('needle');
+const needleAngles = {1:-70, 2:-35, 3:0, 4:35, 5:70};
+
+function paintGauge(level){
+  document.querySelectorAll('.gauge-seg').forEach(seg => seg.classList.toggle('dim', Number(seg.getAttribute('data-lv')) !== level));
+  needle.style.transform = `rotate(${needleAngles[level]}deg)`;
+  document.getElementById('resultCard').style.borderColor = ktasInfo[level].color;
+}
+
+function setResultText(level, title, why){
+  document.getElementById('resultTitle').textContent = title || `KTAS ${level}단계 · ${ktasInfo[level].name}`;
+  document.getElementById('resultDesc').textContent = ktasInfo[level].desc;
+  const whyBox = document.getElementById('resultWhy');
+  if(why){
+    whyBox.style.display = 'block';
+    document.getElementById('whyText').textContent = why;
+  } else {
+    whyBox.style.display = 'none';
+  }
+}
+
+function evaluateChecklist(){
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  const checked = symptoms.filter(s => document.getElementById(s.id).checked);
+  let level = 5;
+  if(checked.length > 0) level = Math.min(...checked.map(s => s.lvl));
+  paintGauge(level);
+
+  if(checked.length === 0){
+    setResultText(5, null, '체크된 증상이 없어 안정적인 상태(KTAS 5)로 간주했습니다.');
+    return;
+  }
+  const triggers = checked.filter(s => s.lvl === level).map(s => s.label).join(', ');
+  setResultText(level, null, `선택한 증상 중 '${triggers}' 항목이 가장 위험도가 높아 KTAS ${level}단계로 분류됩니다.`);
+}
+
+document.getElementById('evalBtn').addEventListener('click', evaluateChecklist);
+document.getElementById('resetBtn').addEventListener('click', () => {
+  symptoms.forEach(s => document.getElementById(s.id).checked = false);
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  document.getElementById('resultTitle').textContent = '상황을 선택하거나 증상을 체크해보세요';
+  document.getElementById('resultDesc').textContent = '아무 증상도 선택하지 않으면 안정적인 상태로 간주해 KTAS 5단계로 표시됩니다.';
+  document.querySelectorAll('.gauge-seg').forEach(seg => seg.classList.remove('dim'));
+  needle.style.transform = 'rotate(0deg)';
+  document.getElementById('resultWhy').style.display = 'none';
+  document.getElementById('resultCard').style.borderColor = 'var(--line)';
+});
+
+// ---------- 시나리오 (상황 카드) ----------
+const scenarios = [
+  {
+    id:'science', label:'과학실 약품을 실수로 삼킨 경우',
+    checked:['mild'],
+    title:'KTAS 2단계 · 긴급',
+    level:2,
+    why:'겉으로 드러난 증상만 보면 어지러움과 구토뿐이라 경미해 보일 수 있습니다. 하지만 무슨 약품인지 정확히 모르는 상태로 삼켰다면, 그 자체가 위험 요인입니다. 부식성 물질이나 독성 화학물질은 시간이 지나면서 갑자기 상태가 악화될 수 있기 때문에, 실제 응급실에서는 지금 안정적으로 보여도 성분을 확인하고 신속하게 처치할 수 있도록 긴급(2단계)으로 분류하는 경우가 많습니다.'
+  },
+  {
+    id:'accident', label:'교통사고 후 구토',
+    checked:['headache','abdpain'],
+    title:'KTAS 3단계 · 응급',
+    level:3,
+    why:'외상 이후의 구토는 두부 손상이나 복강 내 장기 손상의 신호일 수 있습니다. 겉보기에 크게 위험해 보이지 않아도 두통·복통이 동반되면 악화 가능성을 배제할 수 없어 비교적 신속한 평가가 필요합니다.'
+  },
+  {
+    id:'motion', label:'멀미로 인한 구토',
+    checked:['mild'],
+    title:'KTAS 5단계 · 비응급',
+    level:5,
+    why:'멀미는 위장관이 아니라 전정기관(평형기관) 자극이 원인입니다. 다른 위험 신호가 동반되지 않는 한 시간이 지나면 저절로 호전되는 안정적인 상태로 분류됩니다.'
+  },
+  {
+    id:'brain', label:'뇌질환 병력자의 구토',
+    checked:['neuro','headache'],
+    title:'KTAS 2단계 · 긴급',
+    level:2,
+    why:'기존 뇌질환이 있는 환자의 구토는 뇌압 상승 등으로 인한 중추성 구토일 가능성이 있습니다. 신경학적 이상 증상이 동반되면 몇 분 내 처치가 필요한 잠재적 위험 상태로 분류됩니다.'
+  },
+  {
+    id:'diabetes', label:'당뇨병 환자의 구토',
+    checked:['dehydration'],
+    title:'KTAS 2단계 · 긴급',
+    level:2,
+    why:'당뇨병 환자의 구토는 당뇨병성 케톤산증(DKA)의 초기 신호일 수 있습니다. 지금은 탈수 징후 정도로 가벼워 보여도, DKA는 짧은 시간 안에 의식 저하나 쇼크로 빠르게 진행할 수 있는 대사 응급 상태이기 때문에, 초기 단계라도 신속한 혈액검사와 처치가 필요한 긴급(2단계)으로 분류하는 것이 안전합니다.'
+  },
+];
+
+const scenarioRow = document.getElementById('scenarioRow');
+scenarios.forEach(sc => {
+  const chip = document.createElement('button');
+  chip.className = 'chip';
+  chip.textContent = sc.label;
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    symptoms.forEach(s => document.getElementById(s.id).checked = sc.checked.includes(s.id));
+    paintGauge(sc.level);
+    setResultText(sc.level, sc.title, sc.why);
+  });
+  scenarioRow.appendChild(chip);
+});
+</script>
+
+</body>
+</html>
